@@ -6,7 +6,8 @@
     "deps:copy": "copy package.json functions",
     "deps:install": "yarn --cwd functions",
     "prod": "yarn clean && yarn build && yarn deps:copy && yarn deps:install",
-    "test": "eslint src"
+    "test": "eslint src",
+    "format": "prettier-eslint src/**/*.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0-beta.46",
@@ -22,6 +23,7 @@
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.1.0",
+    "prettier-eslint-cli": "^4.7.1",
     "rimraf": "^2.6.2"
   },
   "dependencies": {

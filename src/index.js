@@ -1,6 +1,5 @@
 import '@babel/polyfill'
 
-import path from 'path'
 import fetch from 'node-fetch'
 import express from 'express'
 import cors from 'cors'
@@ -20,6 +19,9 @@ admin.initializeApp({
   databaseURL: 'https://event0-portal.firebaseio.com',
 })
 const db = admin.firestore()
+
+const DOMAINS = ['cps.edu', 'srnd.org', 'studentrnd.org']
+const OTHER_EMAILS = ['antonoutkine@gmail.com']
 
 const app = express()
 app.use(morgan('tiny'))
@@ -47,6 +49,12 @@ app.post(
           return
         }
         const json = await response.json()
+
+        if (!DOMAINS.includes(json.email.split('@')[1]) && !OTHER_EMAILS.includes(json.email)) {
+          res.status(401).json({ error: 'Make sure to use your cps email.' })
+          return
+        }
+
         if (
           json.aud !== googleSecret.web.client_id ||
           Date.now() > json.exp * 1000 ||
