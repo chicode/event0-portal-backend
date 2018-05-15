@@ -2,23 +2,24 @@ function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-async function processSingle(promise) {
+async function processSingle(id, promise) {
   const result = await promise
-  return result.exists ? result.data() : null
+  return result.exists ? { id, ...result.data() } : null
 }
 
 async function processMultiple(promise) {
   return (await promise).docs
 }
 
-export async function get(name) {
+export function get(name) {
   return {
-    [name]: async (_, { id }, { db }) =>
+    [name]: (_, { id }, { db }) =>
       processSingle(
+        id,
         db
           .collection(name)
           .doc(id)
-          .get()
+          .get(),
       ),
   }
 }
@@ -59,16 +60,14 @@ export function del(name) {
   }
 }
 
-export default function(db, name) {
-  return {
-    Query: {
-      ...get(db, name),
-      ...getAll(db, name),
-    },
-    Mutation: {
-      ...create(db, name),
-      ...update(db, name),
-      ...del(db, name),
-    },
-  }
-}
+export default (name) => ({
+  Query: {
+    ...get(name),
+    ...getAll(name),
+  },
+  Mutation: {
+    ...create(name),
+    ...update(name),
+    ...del(name),
+  },
+})
