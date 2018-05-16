@@ -72,4 +72,7 @@ export default {
     createProject: createProject,
     deleteProject: deleteProject,
   },
+  Project: {
+    author: (_, args, ctx) => user.Query.user(_, { id: _.author }, ctx),
+  },
 }

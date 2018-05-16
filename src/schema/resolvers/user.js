@@ -1,5 +1,6 @@
 import boilerplate, { get } from './boilerplate'
 import { exists, maxLength } from './requirements'
+import project from './project'
 
 const mapCtx = (func) => (_, args, ctx) =>
   func(_, { ...args, id: ctx.userId, input: { ...args.input, email: ctx.userEmail } }, ctx)
@@ -23,6 +24,9 @@ const resolvers = {
         { ...args, input: { ...args.input, projects: [] } },
         { ...ctx, newUser: false },
       ),
+  },
+  User: {
+    project: (_, args, ctx) => project.Query.project(_, { id: _.project }, ctx),
   },
 }
 

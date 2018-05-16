@@ -3,7 +3,7 @@ type Project {
   id: ID!
   title: String!
   description: String!
-  author: ID!
+  author: User!
 }
 
 extend type Query {
