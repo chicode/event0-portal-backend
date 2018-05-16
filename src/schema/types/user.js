@@ -4,6 +4,7 @@ type User {
   email: String!
   username: String!
   bio: String
+  projects: [ID]!
 }
 
 type Query {
@@ -13,17 +14,16 @@ type Query {
 
 input createUserInput {
   username: String!
-  email: String!
 }
 
 input updateUserInput {
   bio: String
   username: String
+  projects: [ID]
 }
 
 type Mutation {
-  createUser(id: ID!, input: createUserInput!): Result!
-  updateUser(id: ID!, input: updateUserInput!): Result!
-  deleteUser(id: ID!): Result!
+  createUser(input: createUserInput!): Result!
+  updateUser(input: updateUserInput!): Result!
 }
 `

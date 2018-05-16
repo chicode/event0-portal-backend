@@ -36,13 +36,14 @@ app.post(
     if (req.get('Authorization')) {
       const token = req.get('Authorization').split(' ')[1]
 
-      let id
+      let id, email
 
       if (token === testingSecret.token) {
         id = testingSecret.id
+        email = testingSecret.email
       } else {
         const response = await fetch(
-          'https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + token
+          'https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + token,
         )
         if (response.status !== 200) {
           res.status(401).json({ error: 'Invalid token.' })
@@ -50,7 +51,9 @@ app.post(
         }
         const json = await response.json()
 
-        if (!DOMAINS.includes(json.email.split('@')[1]) && !OTHER_EMAILS.includes(json.email)) {
+        email = json.email
+
+        if (!DOMAINS.includes(email.split('@')[1]) && !OTHER_EMAILS.includes(email)) {
           res.status(401).json({ error: 'Make sure to use your cps email.' })
           return
         }
@@ -65,6 +68,9 @@ app.post(
         }
         id = json.sub
       }
+
+      req.context.user = id
+      req.context.email = email
 
       const user = await db
         .collection('users')
@@ -83,7 +89,7 @@ app.post(
   graphqlExpress((req) => ({
     context: { ...req.context, db },
     schema,
-  }))
+  })),
 )
 if (process.env.NODE_ENV === 'development') {
   app.get(
@@ -91,11 +97,11 @@ if (process.env.NODE_ENV === 'development') {
     graphiqlExpress(() => ({
       passHeader: `'Authorization': 'Bearer ${testingSecret.token}'`,
       endpointURL: '/graphql',
-    }))
+    })),
   )
 }
 
 module.exports.server = functions.https.onRequest(app)
 if (process.env.NODE_ENV === 'development') {
-  app.listen(3000, () => console.log('Listening on http://localhost:3000'))
+  app.listen(3000, () => console.log('Graphiql on http://localhost:3000/graphiql'))
 }
