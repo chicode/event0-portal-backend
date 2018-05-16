@@ -4,12 +4,11 @@ function capitalize(string) {
 
 async function processSingle(id, promise) {
   const result = await promise
-  console.log(result.data())
   return result.exists ? { id, ...result.data() } : null
 }
 
 async function processMultiple(promise) {
-  return (await promise).docs
+  return (await promise).docs.map((doc) => ({ ...doc.data(), id: doc.id }))
 }
 
 export const get = (name) => (_, { id }, { db }) =>
@@ -23,13 +22,14 @@ export const get = (name) => (_, { id }, { db }) =>
 
 export const getAll = (name) => (_, args, { db }) => processMultiple(db.collection(name).get())
 
-export const create = (name) => (_, { id, input }, { db }) =>
-  id
+export const create = (name) => (_, { id, input }, { db }) => {
+  return id
     ? db
         .collection(name)
         .doc(id)
         .set(input)
     : db.collection(name).add(input)
+}
 
 export const update = (name) => (_, { id, input }, { db }) =>
   db
@@ -43,26 +43,32 @@ export const del = (name) => (_, { id }, { db }) =>
     .doc(id)
     .delete()
 
-function verifyWrap(check, func) {
+function verifyWrap(check, message, func) {
   return async (_, args, ctx) => {
     if (!ctx.newUser && (await check(_, args, ctx))) {
       return func(_, args, ctx)
+    } else if (ctx.newUser) {
+      throw new Error('Not yet a user.')
     } else {
-      throw new Error('Not authorized.')
+      throw new Error(message)
     }
   }
 }
 
-export default function(name, verify, mapCtx) {
+export default function(name, verify, verifyExists, mapCtx) {
   const boilerplate = {
     Query: {
       [name]: get(name),
       [name + 's']: getAll(name),
     },
     Mutation: {
-      ['create' + capitalize(name)]: mapCtx(create(name)),
-      ['update' + capitalize(name)]: verifyWrap(verify, mapCtx(update(name))),
-      ['delete' + capitalize(name)]: verifyWrap(verify, mapCtx(del(name))),
+      ['create' + capitalize(name)]: verifyWrap(
+        verifyExists,
+        'Already exists.',
+        mapCtx(create(name)),
+      ),
+      ['update' + capitalize(name)]: verifyWrap(verify, 'Not authorized.', mapCtx(update(name))),
+      ['delete' + capitalize(name)]: verifyWrap(verify, 'Not authorized.', mapCtx(del(name))),
     },
   }
   return boilerplate

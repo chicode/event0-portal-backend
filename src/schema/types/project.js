@@ -7,6 +7,7 @@ type Project {
 }
 
 extend type Query {
+  titleProject(title: String!): Project
   project(id: ID!): Project
   projects: [Project]!
 }

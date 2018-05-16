@@ -69,11 +69,11 @@ app.post(
         id = json.sub
       }
 
-      req.context.user = id
-      req.context.email = email
+      req.context.userId = id
+      req.context.userEmail = email
 
       const user = await db
-        .collection('users')
+        .collection('user')
         .doc(id)
         .get()
       if (!user.exists) {

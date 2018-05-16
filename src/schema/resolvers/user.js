@@ -1,10 +1,12 @@
-import boilerplate from './boilerplate'
+import boilerplate, { get } from './boilerplate'
 
-const boiler = boilerplate(
-  'user',
-  () => Promise.resolve(),
-  (func) => (_, args, { user, email, ...other }) => func(_, { ...args, id: user, email }, other),
-)
+const mapCtx = (func) => (_, args, ctx) =>
+  func(_, { ...args, id: ctx.userId, input: { ...args.input, email: ctx.userEmail } }, ctx)
+const verifyExists = async (_, args, ctx) => {
+  return (await get('user')(_, { id: ctx.userId }, ctx)).exists
+}
+
+const boiler = boilerplate('user', () => Promise.resolve(true), verifyExists, mapCtx)
 
 const resolvers = {
   Query: {
@@ -12,7 +14,12 @@ const resolvers = {
   },
   Mutation: {
     ...boiler.Mutation,
-    createUser: (_, args, ctx) => boiler.Mutation.createUser(_, args, { ...ctx, newUser: false }),
+    createUser: (_, args, ctx) =>
+      boiler.Mutation.createUser(
+        _,
+        { ...args, input: { ...args.input, projects: [] } },
+        { ...ctx, newUser: false },
+      ),
   },
 }
 
