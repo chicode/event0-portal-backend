@@ -1,12 +1,15 @@
 import boilerplate, { get } from './boilerplate'
+import { exists, maxLength } from './requirements'
 
 const mapCtx = (func) => (_, args, ctx) =>
   func(_, { ...args, id: ctx.userId, input: { ...args.input, email: ctx.userEmail } }, ctx)
-const verifyExists = async (_, args, ctx) => {
-  return (await get('user')(_, { id: ctx.userId }, ctx)).exists
+const verifyExists = async (_, args, ctx) => (await get('user')(_, { id: ctx.userId }, ctx)).exists
+const requirements = {
+  username: [exists, maxLength(10)],
+  bio: [exists, maxLength(300)],
 }
 
-const boiler = boilerplate('user', () => Promise.resolve(true), verifyExists, mapCtx)
+const boiler = boilerplate('user', mapCtx, () => Promise.resolve(), verifyExists, requirements)
 
 const resolvers = {
   Query: {

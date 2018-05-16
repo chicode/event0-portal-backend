@@ -1,6 +1,6 @@
 export const index = `
 type Result {
-  writeTime: String!
+  id: ID!
 }
 `
 

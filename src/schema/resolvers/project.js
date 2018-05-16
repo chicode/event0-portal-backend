@@ -1,37 +1,59 @@
 import boilerplate from './boilerplate'
+import { exists, maxLength } from './requirements'
 import user from './user'
 
 const mapCtx = (func) => (_, args, ctx) => {
   return func(_, { ...args, input: { ...args.input, author: ctx.userId } }, ctx)
 }
-const verify = async (_, { id }, ctx) =>
-  (await user.Query.user(_, ctx.userId, ctx)).projects.includes(id)
-const verifyExists = async (_, { input: { title } }, ctx) => {
-  return (await titleProject(_, { title }, ctx)).length === 0
+
+async function verify(_, { id }, ctx) {
+  if (!(await user.Query.user(_, ctx.userId, ctx)).projects.includes(id)) {
+    throw new Error('Not your project.')
+  }
 }
 
+async function verifyExists(_, { input: { title } }, ctx) {
+  if ((await titleProject(_, { title }, ctx)).length !== 0) {
+    throw new Error('Project exists.')
+  }
+}
+
+const requirements = {
+  title: [exists, maxLength(10)],
+  description: [exists, maxLength(300)],
+}
+
+const boiler = boilerplate('project', mapCtx, verify, verifyExists, requirements)
+
 const createProject = async (_, args, ctx) => {
-  await boiler.Mutation.createProject(_, args, ctx)
-  return user.Mutation.updateUser(
+  const { id } = await boiler.Mutation.createProject(_, args, ctx)
+  await user.Mutation.updateUser(
     _,
     {
-      projects: [...(await user.Query.user(_, { id: ctx.userId }, ctx)).projects, args.id],
+      id: ctx.userId,
+      input: {
+        projects: [...(await user.Query.user(_, { id: ctx.userId }, ctx)).projects, id],
+      },
     },
     ctx,
   )
+  return { id }
 }
 
 const deleteProject = async (_, args, ctx) => {
   await boiler.Mutation.deleteProject(_, args, ctx)
-  return user.Mutation.updateUser(
+  await user.Mutation.updateUser(
     _,
     {
-      projects: (await user.Query.user(_, { id: args.author }, ctx)).projects.filter(
-        (id) => id !== args.id,
-      ),
+      input: {
+        projects: (await user.Query.user(_, { id: ctx.userId }, ctx)).projects.filter(
+          (id) => id !== args.id,
+        ),
+      },
     },
     ctx,
   )
+  return { id: args.id }
 }
 
 const titleProject = async (_, { title }, { db }) =>
@@ -40,8 +62,6 @@ const titleProject = async (_, { title }, { db }) =>
     .where('title', '==', title)
     .get()).docs.map((doc) => doc.data())
 
-const boiler = boilerplate('project', verify, verifyExists, mapCtx)
-
 export default {
   Query: {
     ...boiler.Query,
@@ -49,7 +69,7 @@ export default {
   },
   Mutation: {
     ...boiler.Mutation,
-    createProject: mapCtx(createProject),
-    deleteProject: mapCtx(deleteProject),
+    createProject: createProject,
+    deleteProject: deleteProject,
   },
 }
