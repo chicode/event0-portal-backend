@@ -17,14 +17,10 @@ const requirements = {
 
 const boiler = boilerplate('user', mapCtx, () => Promise.resolve(), verifyExists, requirements)
 
-// const createUser = async (_, args, ctx) => {
-//   await boiler.Mutation.createUser(
-//     _,
-//     { ...args, input: { ...args.input } },
-//     { ...ctx, newUser: false },
-//   )
-//   return boiler.Query.user(_, { id: ctx.userId }, ctx)
-// }
+const createUser = async (_, args, ctx) => {
+  await boiler.Mutation.createUser(_, args, { ...ctx, newUser: false })
+  return boiler.Query.user(_, { id: ctx.userId }, ctx)
+}
 
 const resolvers = {
   Query: {
@@ -32,7 +28,7 @@ const resolvers = {
   },
   Mutation: {
     ...boiler.Mutation,
-    // createUser,
+    createUser,
   },
   User: {
     project: (_, args, ctx) =>

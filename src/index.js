@@ -20,7 +20,7 @@ admin.initializeApp({
 })
 const db = admin.firestore()
 
-const DOMAINS = ['cps.edu', 'srnd.org', 'studentrnd.org']
+const DOMAINS = ['cps.edu', 'chicode.net']
 const OTHER_EMAILS = ['antonoutkine@gmail.com']
 
 const app = express()
