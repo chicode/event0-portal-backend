@@ -43,5 +43,6 @@ extend type Mutation {
   unvote(id: ID!, category: Category!): Project!
   updateProject(id: ID!, input: updateProjectInput!): Project!
   deleteProject(id: ID!): Project!
+  reset(id: ID!): Project!
 }
 `

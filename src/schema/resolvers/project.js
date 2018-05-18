@@ -70,6 +70,7 @@ const unvote = async (_, { id, category }, ctx) => {
   } else {
     throw new Error('You have not voted.')
   }
+
   await update('project')(
     _,
     {
@@ -84,8 +85,21 @@ const unvote = async (_, { id, category }, ctx) => {
 }
 
 const vote = async (_, { id, category }, ctx) => {
-  if ((await user.Query.user(_, { id: ctx.userId }, ctx))[category + 'Vote']) {
-    await unvote(_, { id, category }, ctx)
+  const pastVoteId = (await user.Query.user(_, { id: ctx.userId }, ctx))[category + 'Vote']
+  if (pastVoteId === id) {
+    return boiler.Query.project(_, { id }, ctx)
+  } else if (pastVoteId) {
+    await update('project')(
+      _,
+      {
+        id: pastVoteId,
+        input: {
+          [category + 'Votes']:
+            (await boiler.Query.project(_, { id: pastVoteId }, ctx))[category + 'Votes'] - 1,
+        },
+      },
+      ctx,
+    )
   }
   await user.Mutation.updateUser(_, { input: { [category + 'Vote']: id } }, ctx)
   await update('project')(
@@ -118,6 +132,14 @@ const resolvers = {
     clap,
     vote,
     unvote,
+    reset: async (_, { id }, ctx) => {
+      await unvote(_, { id, category: 'fun' }, ctx)
+      await unvote(_, { id, category: 'creativity' }, ctx)
+      await unvote(_, { id, category: 'polish' }, ctx)
+      await unvote(_, { id, category: 'design' }, ctx)
+      await unvote(_, { id, category: 'tech' }, ctx)
+      return boiler.Query.project(_, { id }, ctx)
+    },
   },
   Project: {
     author: (_, args, ctx) => user.Query.user(_, { id: _.author }, ctx),
