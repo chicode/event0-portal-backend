@@ -2,14 +2,23 @@ import boilerplate, { update } from './boilerplate'
 import { exists, maxLength } from './requirements'
 import user from './user'
 
-const mapCtx = (func) => (_, args, ctx) => {
-  return func(_, { ...args, input: { ...args.input, author: ctx.userId } }, ctx)
+const mapCtx = (func) => async (_, args, ctx) => {
+  return func(
+    _,
+    {
+      ...args,
+      id: (await user.Query.user(_, { id: ctx.userId }, ctx)).project,
+      input: { ...args.input, author: ctx.userId },
+    },
+    ctx,
+  )
 }
 
 async function verify(_, { id }, ctx) {
-  if (!(await user.Query.user(_, { id: ctx.userId }, ctx)).projects.includes(id)) {
-    throw new Error('Not your project.')
-  }
+  return Promise.resolve()
+  // if (!(await user.Query.user(_, { id: ctx.userId }, ctx)).projects.includes(id)) {
+  //   throw new Error('Not your project.')
+  // }
 }
 
 async function verifyExists(_, { input: { title } }, ctx) {
@@ -26,6 +35,9 @@ const requirements = {
 const boiler = boilerplate('project', mapCtx, verify, verifyExists, requirements)
 
 const createProject = async (_, args, ctx) => {
+  if ((await user.Query.user(_, { id: ctx.userId }, ctx)).project) {
+    throw new Error('You already have a project.')
+  }
   const { id } = await boiler.Mutation.createProject(
     _,
     {

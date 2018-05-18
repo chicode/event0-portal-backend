@@ -40,7 +40,7 @@ extend type Mutation {
   createProject(input: createProjectInput!): Project!
   clap(id: ID!): Project!
   vote(id: ID!, category: Category!): Project!
-  updateProject(id: ID!, input: updateProjectInput!): Project!
-  deleteProject(id: ID!): Project!
+  updateProject(input: updateProjectInput!): Project!
+  deleteProject: Project!
 }
 `
