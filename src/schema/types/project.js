@@ -4,6 +4,7 @@ type Project {
   title: String!
   description: String!
   author: User!
+  claps: Int!
 }
 
 extend type Query {
@@ -23,8 +24,9 @@ input updateProjectInput {
 }
 
 extend type Mutation {
-  createProject(input: createProjectInput!): Result!
-  updateProject(id: ID!, input: updateProjectInput!): Result!
-  deleteProject(id: ID!): Result!
+  createProject(input: createProjectInput!): Project!
+  clap(id: ID!): Project!
+  updateProject(id: ID!, input: updateProjectInput!): Project!
+  deleteProject(id: ID!): Project!
 }
 `

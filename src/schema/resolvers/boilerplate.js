@@ -12,6 +12,7 @@ async function processMultiple(promise) {
 }
 
 export const get = (name) => (_, { id }, { db }) => {
+  console.log('final', id)
   return processSingle(
     id,
     db

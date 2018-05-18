@@ -1,4 +1,4 @@
-import boilerplate from './boilerplate'
+import boilerplate, { update } from './boilerplate'
 import { exists, maxLength } from './requirements'
 import user from './user'
 
@@ -7,7 +7,7 @@ const mapCtx = (func) => (_, args, ctx) => {
 }
 
 async function verify(_, { id }, ctx) {
-  if (!(await user.Query.user(_, ctx.userId, ctx)).projects.includes(id)) {
+  if (!(await user.Query.user(_, { id: ctx.userId }, ctx)).projects.includes(id)) {
     throw new Error('Not your project.')
   }
 }
@@ -26,7 +26,11 @@ const requirements = {
 const boiler = boilerplate('project', mapCtx, verify, verifyExists, requirements)
 
 const createProject = async (_, args, ctx) => {
-  const { id } = await boiler.Mutation.createProject(_, args, ctx)
+  const { id } = await boiler.Mutation.createProject(
+    _,
+    { ...args, input: { ...args.input, claps: 0 } },
+    ctx,
+  )
   await user.Mutation.updateUser(
     _,
     {
@@ -56,6 +60,15 @@ const deleteProject = async (_, args, ctx) => {
   return { id: args.id }
 }
 
+const clap = async (_, { id }, ctx) => {
+  await update('project')(
+    _,
+    { id, input: { claps: (await boiler.Query.project(_, { id }, ctx)).claps + 1 } },
+    ctx,
+  )
+  return boiler.Query.project(_, { id }, ctx)
+}
+
 const titleProject = async (_, { title }, { db }) =>
   (await db
     .collection('project')
@@ -69,8 +82,9 @@ export default {
   },
   Mutation: {
     ...boiler.Mutation,
-    createProject: createProject,
-    deleteProject: deleteProject,
+    createProject,
+    deleteProject,
+    clap,
   },
   Project: {
     author: (_, args, ctx) => user.Query.user(_, { id: _.author }, ctx),
