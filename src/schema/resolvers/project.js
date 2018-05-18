@@ -13,7 +13,7 @@ async function verify(_, { id }, ctx) {
 }
 
 async function verifyExists(_, { input: { title } }, ctx) {
-  if ((await titleProject(_, { title }, ctx)).length !== 0) {
+  if (await titleProject(_, { title }, ctx)) {
     throw new Error('Project exists.')
   }
 }
@@ -28,7 +28,18 @@ const boiler = boilerplate('project', mapCtx, verify, verifyExists, requirements
 const createProject = async (_, args, ctx) => {
   const { id } = await boiler.Mutation.createProject(
     _,
-    { ...args, input: { ...args.input, claps: 0 } },
+    {
+      ...args,
+      input: {
+        ...args.input,
+        claps: 0,
+        funVotes: 0,
+        creativityVotes: 0,
+        designVotes: 0,
+        polishVotes: 0,
+        techVotes: 0,
+      },
+    },
     ctx,
   )
   await user.Mutation.updateUser(
@@ -69,11 +80,25 @@ const clap = async (_, { id }, ctx) => {
   return boiler.Query.project(_, { id }, ctx)
 }
 
+const vote = async (_, { id, category }, ctx) => {
+  await update('project')(
+    _,
+    {
+      id,
+      input: {
+        [category + 'Votes']: (await boiler.Query.project(_, { id }, ctx))[category + 'Votes'] + 1,
+      },
+    },
+    ctx,
+  )
+  return boiler.Query.project(_, { id }, ctx)
+}
+
 const titleProject = async (_, { title }, { db }) =>
   (await db
     .collection('project')
     .where('title', '==', title)
-    .get()).docs.map((doc) => doc.data())
+    .get()).docs.map((doc) => doc.data())[0]
 
 export default {
   Query: {
@@ -85,6 +110,7 @@ export default {
     createProject,
     deleteProject,
     clap,
+    vote,
   },
   Project: {
     author: (_, args, ctx) => user.Query.user(_, { id: _.author }, ctx),
