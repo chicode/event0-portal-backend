@@ -6,7 +6,6 @@
         "deps:copy": "cp package.json functions",
         "deps:install": "yarn --cwd functions",
         "prod": "yarn clean && yarn build && yarn deps:copy && yarn deps:install",
-        "test": "eslint src",
         "format": "prettier-eslint src/**/*.js",
         "deploy": "firebase deploy"
     },
