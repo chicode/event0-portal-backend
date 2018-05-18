@@ -33,11 +33,6 @@ const createProject = async (_, args, ctx) => {
       input: {
         ...args.input,
         claps: 0,
-        funVotes: 0,
-        creativityVotes: 0,
-        designVotes: 0,
-        polishVotes: 0,
-        techVotes: 0,
       },
     },
     ctx,
@@ -64,54 +59,11 @@ const clap = async (_, { id }, ctx) => {
   return boiler.Query.project(_, { id }, ctx)
 }
 
-const unvote = async (_, { id, category }, ctx) => {
-  if ((await user.Query.user(_, { id: ctx.userId }, ctx))[category + 'Vote']) {
-    await user.Mutation.updateUser(_, { input: { [category + 'Vote']: null } }, ctx)
-  } else {
-    throw new Error('You have not voted.')
-  }
-
-  await update('project')(
-    _,
-    {
-      id,
-      input: {
-        [category + 'Votes']: (await boiler.Query.project(_, { id }, ctx))[category + 'Votes'] - 1,
-      },
-    },
-    ctx,
-  )
-  return boiler.Query.project(_, { id }, ctx)
-}
-
 const vote = async (_, { id, category }, ctx) => {
   const pastVoteId = (await user.Query.user(_, { id: ctx.userId }, ctx))[category + 'Vote']
-  if (pastVoteId === id) {
-    return boiler.Query.project(_, { id }, ctx)
-  } else if (pastVoteId) {
-    await update('project')(
-      _,
-      {
-        id: pastVoteId,
-        input: {
-          [category + 'Votes']:
-            (await boiler.Query.project(_, { id: pastVoteId }, ctx))[category + 'Votes'] - 1,
-        },
-      },
-      ctx,
-    )
+  if (pastVoteId !== id) {
+    await user.Mutation.updateUser(_, { input: { [category + 'Vote']: id } }, ctx)
   }
-  await user.Mutation.updateUser(_, { input: { [category + 'Vote']: id } }, ctx)
-  await update('project')(
-    _,
-    {
-      id,
-      input: {
-        [category + 'Votes']: (await boiler.Query.project(_, { id }, ctx))[category + 'Votes'] + 1,
-      },
-    },
-    ctx,
-  )
   return boiler.Query.project(_, { id }, ctx)
 }
 
@@ -120,6 +72,17 @@ const titleProject = async (_, { title }, { db }) =>
     .collection('project')
     .where('title', '==', title)
     .get()).docs.map((doc) => doc.data())[0]
+
+const getVotes = (category) => async (_, args, ctx) => {
+  const users = await user.Query.users(_, {}, ctx)
+  let i = 0
+  for (let user of users) {
+    if (user[category + 'Vote'] === _.id) {
+      i++
+    }
+  }
+  return i
+}
 
 const resolvers = {
   Query: {
@@ -131,18 +94,14 @@ const resolvers = {
     createProject,
     clap,
     vote,
-    unvote,
-    reset: async (_, { id }, ctx) => {
-      await unvote(_, { id, category: 'fun' }, ctx)
-      await unvote(_, { id, category: 'creativity' }, ctx)
-      await unvote(_, { id, category: 'polish' }, ctx)
-      await unvote(_, { id, category: 'design' }, ctx)
-      await unvote(_, { id, category: 'tech' }, ctx)
-      return boiler.Query.project(_, { id }, ctx)
-    },
   },
   Project: {
     author: (_, args, ctx) => user.Query.user(_, { id: _.author }, ctx),
+    designVotes: getVotes('design'),
+    funVotes: getVotes('fun'),
+    techVotes: getVotes('tech'),
+    creativityVotes: getVotes('creativity'),
+    polishVotes: getVotes('polish'),
   },
 }
 

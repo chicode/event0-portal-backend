@@ -4,7 +4,6 @@ import fetch from 'node-fetch'
 import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-import throttle from 'express-throttle'
 import morgan from 'morgan'
 import { graphqlExpress, graphiqlExpress } from 'apollo-server-express'
 import * as admin from 'firebase-admin'
@@ -30,7 +29,6 @@ app.use(cors())
 
 app.post(
   '/graphql',
-  // throttle({ rate: '1/s' }),
   bodyParser.json(),
   async (req, res, next) => {
     req.context = {}
