@@ -5,6 +5,11 @@ type User {
   username: String!
   bio: String
   project: Project
+  funVote: Project
+  techVote: Project
+  designVote: Project
+  polishVote: Project
+  creativityVote: Project
 }
 
 type Query {
@@ -22,7 +27,7 @@ input updateUserInput {
 }
 
 type Mutation {
-  createUser(input: createUserInput!): Result!
-  updateUser(input: updateUserInput!): Result!
+  createUser(input: createUserInput!): User!
+  updateUser(input: updateUserInput!): User!
 }
 `

@@ -47,28 +47,12 @@ const createProject = async (_, args, ctx) => {
     {
       id: ctx.userId,
       input: {
-        projects: [...(await user.Query.user(_, { id: ctx.userId }, ctx)).projects, id],
+        project: id,
       },
     },
     ctx,
   )
-  return { id }
-}
-
-const deleteProject = async (_, args, ctx) => {
-  await boiler.Mutation.deleteProject(_, args, ctx)
-  await user.Mutation.updateUser(
-    _,
-    {
-      input: {
-        projects: (await user.Query.user(_, { id: ctx.userId }, ctx)).projects.filter(
-          (id) => id !== args.id,
-        ),
-      },
-    },
-    ctx,
-  )
-  return { id: args.id }
+  return boiler.Query.project(_, { id }, ctx)
 }
 
 const clap = async (_, { id }, ctx) => {
@@ -80,7 +64,30 @@ const clap = async (_, { id }, ctx) => {
   return boiler.Query.project(_, { id }, ctx)
 }
 
+const unvote = async (_, { id, category }, ctx) => {
+  if ((await user.Query.user(_, { id: ctx.userId }, ctx))[category + 'Vote']) {
+    await user.Mutation.updateUser(_, { input: { [category + 'Vote']: null } }, ctx)
+  } else {
+    throw new Error('You have not voted.')
+  }
+  await update('project')(
+    _,
+    {
+      id,
+      input: {
+        [category + 'Votes']: (await boiler.Query.project(_, { id }, ctx))[category + 'Votes'] - 1,
+      },
+    },
+    ctx,
+  )
+  return boiler.Query.project(_, { id }, ctx)
+}
+
 const vote = async (_, { id, category }, ctx) => {
+  if ((await user.Query.user(_, { id: ctx.userId }, ctx))[category + 'Vote']) {
+    await unvote(_, { id, category }, ctx)
+  }
+  await user.Mutation.updateUser(_, { input: { [category + 'Vote']: id } }, ctx)
   await update('project')(
     _,
     {
@@ -100,7 +107,7 @@ const titleProject = async (_, { title }, { db }) =>
     .where('title', '==', title)
     .get()).docs.map((doc) => doc.data())[0]
 
-export default {
+const resolvers = {
   Query: {
     ...boiler.Query,
     titleProject,
@@ -108,11 +115,15 @@ export default {
   Mutation: {
     ...boiler.Mutation,
     createProject,
-    deleteProject,
     clap,
     vote,
+    unvote,
   },
   Project: {
     author: (_, args, ctx) => user.Query.user(_, { id: _.author }, ctx),
   },
 }
+
+delete resolvers.Mutation.deleteProject
+
+export default resolvers
