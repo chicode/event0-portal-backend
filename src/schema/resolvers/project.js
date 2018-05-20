@@ -28,7 +28,7 @@ async function verifyExists(_, { input: { title } }, ctx) {
 }
 
 const requirements = {
-  title: [exists, maxLength(10)],
+  title: [exists, maxLength(50)],
   description: [exists, maxLength(300)],
 }
 

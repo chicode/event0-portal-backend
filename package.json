@@ -7,7 +7,8 @@
         "deps:install": "yarn --cwd functions",
         "prod": "yarn clean && yarn build && yarn deps:copy && yarn deps:install",
         "format": "prettier-eslint src/**/*.js",
-        "deploy": "firebase deploy"
+        "deploy": "firebase deploy",
+        "test": "echo \"test\""
     },
     "devDependencies": {
         "@babel/cli": "^7.0.0-beta.46",

@@ -25,7 +25,7 @@ const OTHER_EMAILS = ['antonoutkine@gmail.com']
 
 const app = express()
 app.use(morgan('tiny'))
-app.use(cors())
+app.use(cors({ origin: true }))
 
 app.post(
   '/graphql',
