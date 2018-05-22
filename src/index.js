@@ -53,10 +53,10 @@ app.post(
 
         email = json.email
 
-        if (!DOMAINS.includes(email.split('@')[1]) && !OTHER_EMAILS.includes(email)) {
-          res.status(401).json({ error: 'Make sure to use your cps email.' })
-          return
-        }
+        // if (!DOMAINS.includes(email.split('@')[1]) && !OTHER_EMAILS.includes(email)) {
+        //   res.status(401).json({ error: 'Make sure to use your cps email.' })
+        //   return
+        // }
 
         if (
           json.aud !== googleSecret.web.client_id ||
