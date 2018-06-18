@@ -1,0 +1,21 @@
+{
+  "input": {
+    "title": "Awesome workshop",
+    "description": "This is a cool workshop",
+    "level": "Beginner",
+    "duration": 60,
+    "language": "Python",
+    "slides": [
+      {
+        "title": "Print",
+        "description": "print is a useful command",
+        "instructions": [
+          {
+            "description": "Make print go woof",
+            "correctCode": ["print(\"Woof\")", "print(\"woof\")"]
+          }
+        ]
+      }
+    ]
+  }
+}

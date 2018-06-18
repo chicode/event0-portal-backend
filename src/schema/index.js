@@ -5,5 +5,5 @@ import * as resolvers from './resolvers'
 
 export default makeExecutableSchema({
   typeDefs: mergeTypes(Object.values(types)),
-  resolvers: mergeResolvers(Object.values(resolvers)),
+  resolvers: mergeResolvers(Object.values(resolvers).map((obj) => obj.boilerplate)),
 })
