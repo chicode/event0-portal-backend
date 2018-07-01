@@ -5,6 +5,8 @@ class Workshop extends Boilerplate {}
 
 const excludes = { Mutation: true }
 
-export default new Workshop('workshop', db, {
+const workshop = new Workshop('workshop', db, {
   excludes,
 })
+
+export default workshop

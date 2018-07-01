@@ -13,7 +13,7 @@ function verifyWrap(...checks) {
         await this[check](...args)
       }
 
-      return fn.call(this, ...args)
+      return fn(...args)
     }
     return descriptor
   }
@@ -32,8 +32,9 @@ function mutation(target, key, descriptor) {
 function callWithOverrides(call) {
   return (target, key, descriptor) => {
     descriptor.value = async function(_, args, ctx) {
-      if (this.overrides[key]) return call.call(this, this.overrides[key], args)
-      else return call.call(this, this.getSuper(key).bind(this), args)
+      call = call.bind(this)
+      if (this.overrides[key]) return call(this.overrides[key], args)
+      else return call(this.getSuper(key), args)
     }
     return descriptor
   }
@@ -42,9 +43,8 @@ function callWithOverrides(call) {
 function mutationReply(target, key, descriptor) {
   let fn = descriptor.value
   descriptor.value = async function(_, { id, input }, ctx) {
-    const newId = await fn.call(this, id, input)
-    console.log(newId)
-    return this.getSuper('get').call(this, id || newId)
+    const newId = await fn(id, input)
+    return this.getSuper('get')(id || newId)
   }
   return descriptor
 }
@@ -52,7 +52,7 @@ function mutationReply(target, key, descriptor) {
 function mapCtx(target, key, descriptor) {
   let fn = descriptor.value
   descriptor.value = function(...args) {
-    return this.mapCtx(fn).call(this, ...args)
+    return this.mapCtx(fn)(...args)
   }
   return descriptor
 }
@@ -71,11 +71,8 @@ export default class Boilerplate extends Database {
     this.defaults = options.defaults || {}
     this.overrides = options.overrides || {}
     this.excludes = options.excludes || {}
-    this.mapCtx = function(func) {
-      return function(_, args, ctx) {
-        func.call(this, _, options.mapCtx ? options.mapCtx(args, ctx) : args, ctx)
-      }
-    }
+    this.mapCtx = (func) => (_, args, ctx) =>
+      func.call(this, _, options.mapCtx ? options.mapCtx(args, ctx) : args, ctx)
 
     this.boilerplate = { Query: {}, Mutation: {} }
     let capitalizedName = capitalize(this.name)
@@ -110,13 +107,13 @@ export default class Boilerplate extends Database {
   @callWithOverrides(function(func, { id }) {
     return func(id)
   })
-  get() {}
+  get = () => {}
 
   @query
   @callWithOverrides(function(func, { id }) {
     return func(id)
   })
-  getAll() {}
+  getAll = () => {}
 
   @mutation
   @mutationReply
@@ -125,7 +122,7 @@ export default class Boilerplate extends Database {
   @callWithOverrides(function(func, { id, input }) {
     return func(id, { ...input, ...this.defaults })
   })
-  create() {}
+  create = () => {}
 
   @mutation
   @mutationReply
@@ -134,7 +131,7 @@ export default class Boilerplate extends Database {
   @callWithOverrides(function(func, { id, input }) {
     return func(id, input)
   })
-  update() {}
+  update = () => {}
 
   @mutation
   @mutationReply
@@ -143,9 +140,9 @@ export default class Boilerplate extends Database {
   @callWithOverrides(function(func, { id }) {
     return func(id)
   })
-  delete() {}
+  delete = () => {}
 
   getSuper(key) {
-    return super[key]
+    return super[key].bind(this)
   }
 }
